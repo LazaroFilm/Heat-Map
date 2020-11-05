@@ -1,16 +1,10 @@
-const fetchDataSet = async () => {
-  const response = await fetch(
-    "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json"
-  );
-  const data = await response.json();
-  drawGraph(JSON.stringify(data));
-};
-fetchDataSet();
+const url =
+  "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json";
 
-const drawGraph = async (data) => {
-  const dataSet = JSON.parse(data).monthlyVariance;
-
-  console.log(dataSet);
+d3.json(url).then((data) => {
+  console.log("hello");
+  // console.log(data.monthlyVariance);
+  console.log(data.baseTemperature);
 
   const w = 600;
   const h = 300;
@@ -27,13 +21,20 @@ const drawGraph = async (data) => {
 
   const xScale = d3 //
     .scaleTime()
-    .domain(d3.extent(dataSet, (d) => xParseYear(d.year)))
+    .domain(d3.extent(data.monthlyVariance, (d) => xParseYear(d.year)))
     .range([p, w - p]);
 
   const yScale = d3 //
     .scaleLinear()
-    .domain([d3.max(dataSet, (d) => d.month), 0])
+    .domain([d3.max(data.monthlyVariance, (d) => d.month), 0])
     .range([h - p, p]);
+
+  const tempScale = d3 //
+    .scaleLinear()
+    .domain(
+      d3.extent(data.monthlyVariance, (d) => data.baseTemperature + d.variance)
+    )
+    .range("blue", "red");
 
   const xAxis = d3 //
     .axisBottom(xScale.nice());
@@ -54,30 +55,36 @@ const drawGraph = async (data) => {
     { temp: 12.8, color: "#d63127" },
   ];
 
+  const colorRange = d3 // color range
+    .scaleLinear()
+    .domain([2, 13])
+    .range("blue", "red");
+
   svg // Dots
     .selectAll(".cell")
-    .data(dataSet)
+    .data(data.monthlyVariance)
     .enter()
     .append("rect")
     .classed("cell", true)
     .attr("x", (d) => xScale(xParseYear(d.year)))
     .attr("y", (d) => yScale(d.month) - 17)
     .attr("height", 17)
-    .attr("width", 1)
-    // .attr("fill", "red");
+    .attr("width", 2.5)
+    .attr("data-month", (d) => d.month)
+    .attr("data-year", (d) => d.year)
+    .attr("data-temp", (d) => data.baseTemperature + d.variance)
     .attr("fill", (d, i) => {
-      // console.log(d.variance);
-      // console.log(scale);
-      // return d.variance > 0 ? "red" : "blue";
-      scale.forEach((element) => {
-        // console.log(`${d.variance} <= ${element.temp} = ${element.color}`);
-        if (d.variance <= element.temp) {
-          console.log(`COLOR ${element.color}`);
-          return element.color;
-        } else {
-          console.error("no color");
-        }
-      });
+      // const temp = data.baseTemperature + d.variance;
+      // console.log(tempScale(10));
+      // return tempScale(temp);
+      // if (temp <= 5) {
+      //   return scale[0].color;
+      // } else if (temp >= 10) {
+      //   return scale[8].color;
+      // } else {
+      //   return scale[5].color;
+      // }
+      return "red";
     });
 
   svg // X axis
@@ -103,4 +110,4 @@ const drawGraph = async (data) => {
     .attr("height", 20)
     .attr("width", 20)
     .attr("fill", (d) => d.color);
-};
+});
