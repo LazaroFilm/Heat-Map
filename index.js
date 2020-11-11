@@ -166,25 +166,21 @@ d3.json(url).then((data) => {
     .attr("transform", `translate( ${p}, 0)`)
     .call(yAxis);
 
-  svg // Legend
-    .selectAll("legend")
-    .append("rect")
-    .attr("id", "legend")
-    .classed("legned", true)
-    .attr("x", 10)
-    .attr("y", h - 30)
-    .attr("height", 200)
+  const legend = d3 // Legend
+    .select("body")
+    .append("svg")
     .attr("width", 200)
-    .attr("fill", "purple");
+    .attr("height", 200)
+    .attr("id", "legend");
 
-  svg // Legend square
+  legend // Legend square
     .selectAll(".legendRect")
     .data(scale)
     .enter()
     .append("rect")
     .classed("legendRect", true)
-    .attr("x", (d, i) => 30 + i * 20)
-    .attr("y", h - 30)
+    .attr("x", (d, i) => i * 20)
+    .attr("y", 10)
     .attr("height", 20)
     .attr("width", 20)
     .attr("fill", (d) => d.color);
