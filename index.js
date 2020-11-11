@@ -2,10 +2,6 @@ const url =
   "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json";
 
 d3.json(url).then((data) => {
-  // console.log("hello");
-  // console.log(data.monthlyVariance);
-  // console.log(data.baseTemperature);
-
   const w = 3 * Math.ceil(data.monthlyVariance.length / 12);
   const h = 25 * 12;
   const p = 50;
@@ -22,6 +18,7 @@ d3.json(url).then((data) => {
   const xScale = d3 //
     .scaleTime()
     .domain(d3.extent(data.monthlyVariance, (d) => xParseYear(d.year)))
+    // .nice()
     .range([p, w - p]);
 
   const yScale = d3 //
@@ -86,14 +83,7 @@ d3.json(url).then((data) => {
     { temp: 11.7, color: "#f36d43" },
     { temp: 12.8, color: "#d63127" },
   ];
-  // console.log(data.baseTemperature);
-  // console.log(
-  //   "extent:",
-  //   d3.extent(data.monthlyVariance, (d) => {
-  //     console.log("test:", data.baseTemperature + d.variance);
-  //     data.baseTemperature + d.variance;
-  //   })
-  // );
+
   const legendDomaine = () => {
     const min = d3.min(
       data.monthlyVariance,
@@ -103,22 +93,26 @@ d3.json(url).then((data) => {
       data.monthlyVariance,
       (d) => data.baseTemperature + d.variance
     );
-    const steps = 7;
+    const steps = 9;
     const step = (max - min) / steps;
     let a = [];
     for (let i = 0; i <= steps; i++) {
       a = [...a, min + step * i];
     }
-    console.log("domaine: ", a);
+    // console.log("min: ", min);
+    // console.log("max: ", max);
+    // console.log("domaine: ", a);
     return a;
   };
 
+  //TODO Make the color range work. Right now, the ranges
+  //TODO are hard coded with if statements.
   const colorRange = d3 // color range
     .scaleThreshold()
     .domain(legendDomaine())
     .range(scale.map((d) => d.color));
 
-  console.log(scale.map((d) => d.color));
+  // console.log(scale.map((d) => d.color));
 
   svg // rectangles
     .selectAll(".cell")
@@ -135,9 +129,6 @@ d3.json(url).then((data) => {
     .attr("data-temp", (d) => data.baseTemperature + d.variance)
     .attr("fill", (d, i) => {
       const temp = data.baseTemperature + d.variance;
-      // console.log(temp);
-      // console.log(tempScale(10));
-      // return tempScale(temp);
       if (temp <= 6) {
         return scale[0].color;
       } else if (temp <= 7) {
@@ -146,12 +137,30 @@ d3.json(url).then((data) => {
         return scale[4].color;
       } else if (temp <= 9) {
         return scale[6].color;
-        // } else if (d.month === 1) {
-        //   return "green";
       } else {
         return scale[8].color;
       }
-      // return "red";
+    })
+    .on("mouseover", (d, i) => {
+      // console.log("d: ", d, "i: ", i);
+      console.log();
+      tooltip // display tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0.9)
+        .attr("data-year", i.year)
+        .text(
+          `Year: ${i.year} - Temperature: ${(
+            data.baseTemperature + i.variance
+          ).toFixed(2)}`
+        );
+    })
+    .on("mouseout", (d, i) => {
+      tooltip // hide tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+        .text("");
     });
 
   svg // X axis
@@ -165,6 +174,14 @@ d3.json(url).then((data) => {
     .attr("id", "y-axis")
     .attr("transform", `translate( ${p}, 0)`)
     .call(yAxis);
+
+  const tooltip = svg // ToolTip popup
+    .append("text")
+    .attr("x", 5)
+    .attr("y", h - 5)
+    .text("")
+    .style("opacity", 0)
+    .attr("id", "tooltip");
 
   const legend = d3 // Legend
     .select("body")
